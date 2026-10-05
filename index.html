@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Webster Aprende - Matemáticas 1</title>
+<style>
+:root{
+  --bg:#f4f7fb; --card:#ffffff; --text:#1f2937; --muted:#64748b;
+  --primary:#1d4ed8; --ok:#15803d;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text)}
+header{background:#0f172a;color:white;padding:20px;text-align:center}
+header h1{margin:0 0 6px;font-size:28px}
+header p{margin:0;color:#cbd5e1}
+main{max-width:980px;margin:auto;padding:20px}
+.card{background:white;border-radius:16px;padding:22px;margin:16px 0;box-shadow:0 4px 16px rgba(15,23,42,.08)}
+.hidden{display:none}
+button{border:none;border-radius:10px;padding:11px 16px;margin:5px 4px 5px 0;font-size:15px;cursor:pointer}
+.primary{background:#1d4ed8;color:white}
+.secondary{background:#e2e8f0;color:#111827}
+.success{background:#15803d;color:white}
+input{width:100%;max-width:420px;padding:10px 12px;border:1px solid #cbd5e1;border-radius:9px;font-size:16px}
+.answer-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.feedback{margin-top:12px;padding:12px 14px;border-radius:10px;background:#eef2ff;line-height:1.45}
+.correct{background:#dcfce7;color:#14532d}
+.incorrect{background:#fee2e2;color:#7f1d1d}
+.hint{background:#fef3c7;color:#78350f}
+.progress-wrap{background:#e5e7eb;border-radius:999px;height:18px;overflow:hidden}
+.progress-bar{height:100%;background:#2563eb;width:0}
+.score-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin-top:16px}
+.score-box{background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:14px}
+.small{font-size:13px;color:#64748b}
+.topic{font-size:14px;color:#475569;margin-bottom:8px}
+.qnum{font-weight:bold;color:#1d4ed8}
+table{width:100%;border-collapse:collapse;margin-top:12px}
+th,td{border:1px solid #cbd5e1;padding:8px;text-align:left}
+th{background:#e2e8f0}
+@media(max-width:600px){header h1{font-size:23px}main{padding:12px}}
+</style>
+</head>
+<body>
+<header>
+  <h1>Escuela Webster</h1>
+  <p>WEBSTER APRENDE · Matemáticas 1.º</p>
+</header>
+
+<main>
+<section class="card" id="inicio">
+  <h2>Fracciones y decimales</h2>
+  <p>Este tutor interactivo te ayudará a practicar comprensión, procedimiento y aplicación.</p>
+  <label><strong>Escribe tu nombre:</strong></label><br><br>
+  <input id="nombre" type="text" placeholder="Nombre del estudiante">
+  <br><br>
+  <button class="primary" onclick="iniciar()">Comenzar</button>
+  <p class="small">Al final recibirás un diagnóstico y recomendaciones de mejora.</p>
+</section>
+
+<section class="card hidden" id="introduccion">
+  <h2>Antes de comenzar</h2>
+  <p>Recuerda tres ideas:</p>
+  <ol>
+    <li>Una fracción representa una parte de un todo.</li>
+    <li>Para convertir una fracción a decimal, divide numerador entre denominador.</li>
+    <li>Para comparar fracciones y decimales, conviene expresarlos en formas equivalentes.</li>
+  </ol>
+  <button class="primary" onclick="mostrarPregunta()">Iniciar actividades</button>
+</section>
+
+<section class="card hidden" id="actividad">
+  <div class="topic" id="categoria"></div>
+  <div class="qnum" id="numero"></div>
+  <h3 id="pregunta"></h3>
+  <div id="opciones" class="answer-row"></div>
+  <div id="entradaLibre" class="hidden">
+    <input id="respuestaLibre" type="text" placeholder="Escribe tu respuesta">
+    <button class="primary" onclick="responderLibre()">Responder</button>
+  </div>
+  <button class="secondary" onclick="mostrarPista()">Ver pista</button>
+  <div id="retro" class="feedback hidden"></div>
+</section>
+
+<section class="card hidden" id="resultado">
+  <h2>Diagnóstico final</h2>
+  <p id="saludoFinal"></p>
+
+  <div class="score-grid">
+    <div class="score-box">
+      <strong>Comprensión</strong>
+      <div class="progress-wrap"><div id="barC" class="progress-bar"></div></div>
+      <p id="txtC"></p>
+    </div>
+    <div class="score-box">
+      <strong>Procedimiento</strong>
+      <div class="progress-wrap"><div id="barP" class="progress-bar"></div></div>
+      <p id="txtP"></p>
+    </div>
+    <div class="score-box">
+      <strong>Aplicación</strong>
+      <div class="progress-wrap"><div id="barA" class="progress-bar"></div></div>
+      <p id="txtA"></p>
+    </div>
+  </div>
+
+  <h3>Resumen por actividad</h3>
+  <div id="tablaResumen"></div>
+  <div id="recomendacion" class="feedback"></div>
+  <button class="success" onclick="location.reload()">Volver a practicar</button>
+</section>
+</main>
+
+<script>
+const preguntas = [
+{cat:"Comprensión",tipo:"mc",p:"¿Qué representa la fracción 3/4?",opciones:["3 partes de un total de 4 partes iguales","4 partes de un total de 3","3 + 4","Un número mayor que 1"],correcta:0,pista:"Piensa en cómo se divide un entero en partes iguales.",error:"Una fracción indica cuántas partes se toman de un total de partes iguales."},
+{cat:"Procedimiento",tipo:"libre",p:"Convierte 3/5 a decimal.",correctaLibre:["0.6",".6","0,6"],pista:"Divide 3 entre 5.",error:"Para pasar de fracción a decimal, divide numerador entre denominador."},
+{cat:"Comprensión",tipo:"mc",p:"¿Cuál fracción es equivalente a 0.75?",opciones:["1/4","1/2","3/4","4/3"],correcta:2,pista:"0.75 = 75/100. Simplifica.",error:"75/100 se simplifica dividiendo entre 25."},
+{cat:"Procedimiento",tipo:"libre",p:"Convierte 7/10 a decimal.",correctaLibre:["0.7",".7","0,7"],pista:"El denominador es 10.",error:"7/10 son siete décimos, es decir 0.7."},
+{cat:"Comprensión",tipo:"mc",p:"¿Cuál número es mayor?",opciones:["0.45","0.5","Son iguales","No se puede saber"],correcta:1,pista:"Escribe 0.5 como 0.50.",error:"0.50 es mayor que 0.45."},
+{cat:"Procedimiento",tipo:"libre",p:"Calcula: 1/2 + 1/4",correctaLibre:["3/4","0.75","0,75"],pista:"Convierte 1/2 en cuartos.",error:"1/2 = 2/4; entonces 2/4 + 1/4 = 3/4."},
+{cat:"Procedimiento",tipo:"libre",p:"Calcula: 0.8 - 0.35",correctaLibre:["0.45","0,45",".45"],pista:"Escribe 0.8 como 0.80 y resta.",error:"0.80 - 0.35 = 0.45."},
+{cat:"Comprensión",tipo:"mc",p:"¿Cuál afirmación es verdadera?",opciones:["1/2 = 0.2","1/4 = 0.25","3/10 = 3.0","2/5 = 0.2"],correcta:1,pista:"Convierte cada fracción a decimal.",error:"1/4 = 1 ÷ 4 = 0.25."},
+{cat:"Aplicación",tipo:"mc",p:"Una botella tiene 0.75 L de agua. ¿Qué fracción de un litro representa?",opciones:["1/4","1/2","3/4","4/3"],correcta:2,pista:"0.75 = 75 centésimos.",error:"75/100 se simplifica a 3/4."},
+{cat:"Aplicación",tipo:"libre",p:"Ana recorrió 1.5 km por la mañana y 0.75 km por la tarde. ¿Cuántos kilómetros recorrió en total?",correctaLibre:["2.25","2,25"],pista:"Suma 1.50 + 0.75.",error:"1.50 + 0.75 = 2.25 km."},
+{cat:"Aplicación",tipo:"mc",p:"Un tanque está lleno a 2/5 de su capacidad. ¿Cuál decimal representa esa cantidad?",opciones:["0.2","0.4","0.5","2.5"],correcta:1,pista:"Divide 2 entre 5.",error:"2 ÷ 5 = 0.4."},
+{cat:"Procedimiento",tipo:"libre",p:"Calcula: 3/4 - 1/8",correctaLibre:["5/8","0.625","0,625"],pista:"Convierte 3/4 a octavos.",error:"3/4 = 6/8; entonces 6/8 - 1/8 = 5/8."},
+{cat:"Comprensión",tipo:"mc",p:"Si una fracción propia tiene numerador menor que denominador, su valor decimal es:",opciones:["Siempre mayor que 1","Siempre igual a 1","Menor que 1","Siempre negativo"],correcta:2,pista:"Piensa en 3/5 o 1/2.",error:"En una fracción propia, el valor está entre 0 y 1."},
+{cat:"Aplicación",tipo:"libre",p:"Una receta requiere 3/4 de taza de leche. Ya agregaste 1/4. ¿Cuánto falta?",correctaLibre:["1/2","0.5","0,5"],pista:"Resta 3/4 - 1/4.",error:"3/4 - 1/4 = 2/4 = 1/2."},
+{cat:"Aplicación",tipo:"mc",p:"Un descuento de 0.25 del precio equivale a:",opciones:["2.5%","25%","250%","0.25%"],correcta:1,pista:"Multiplica el decimal por 100.",error:"0.25 × 100 = 25%."}
+];
+
+let indice=0, nombre="", intentosPregunta=0;
+let puntajes={
+  "Comprensión":{bien:0,total:0},
+  "Procedimiento":{bien:0,total:0},
+  "Aplicación":{bien:0,total:0}
+};
+let historial=[];
+
+function iniciar(){
+  nombre=document.getElementById("nombre").value.trim();
+  if(!nombre){alert("Escribe tu nombre para comenzar.");return;}
+  document.getElementById("inicio").classList.add("hidden");
+  document.getElementById("introduccion").classList.remove("hidden");
+}
+
+function mostrarPregunta(){
+  document.getElementById("introduccion").classList.add("hidden");
+  if(indice>=preguntas.length){mostrarResultado();return;}
+  document.getElementById("actividad").classList.remove("hidden");
+  intentosPregunta=0;
+  const q=preguntas[indice];
+  document.getElementById("categoria").textContent="Área: "+q.cat;
+  document.getElementById("numero").textContent=`Actividad ${indice+1} de ${preguntas.length}`;
+  document.getElementById("pregunta").textContent=q.p;
+  document.getElementById("retro").className="feedback hidden";
+  const opciones=document.getElementById("opciones");
+  const entrada=document.getElementById("entradaLibre");
+  opciones.innerHTML="";
+  entrada.classList.add("hidden");
+
+  if(q.tipo==="mc"){
+    q.opciones.forEach((op,i)=>{
+      const b=document.createElement("button");
+      b.className="secondary";
+      b.textContent=String.fromCharCode(65+i)+") "+op;
+      b.onclick=()=>responderMC(i);
+      opciones.appendChild(b);
+    });
+  }else{
+    entrada.classList.remove("hidden");
+    document.getElementById("respuestaLibre").value="";
+  }
+}
+
+function mostrarPista(){
+  const q=preguntas[indice], r=document.getElementById("retro");
+  r.className="feedback hint";
+  r.innerHTML="<strong>Pista:</strong> "+q.pista;
+}
+
+function responderMC(op){
+  const q=preguntas[indice];
+  intentosPregunta++;
+  if(op===q.correcta){registrar(true);}else{retroError(q.error);}
+}
+
+function normalizar(txt){
+  return txt.trim().toLowerCase().replace(/\s+/g,"");
+}
+
+function responderLibre(){
+  const q=preguntas[indice];
+  const resp=normalizar(document.getElementById("respuestaLibre").value);
+  intentosPregunta++;
+  const ok=q.correctaLibre.some(x=>normalizar(x)===resp);
+  if(ok){registrar(true);}else{retroError(q.error);}
+}
+
+function retroError(mensaje){
+  const r=document.getElementById("retro");
+  r.className="feedback incorrect";
+  if(intentosPregunta===1){
+    r.innerHTML="<strong>Aún no.</strong> "+mensaje+"<br>Intenta una vez más.";
+  }else{
+    r.innerHTML="<strong>Revisa el procedimiento.</strong> "+mensaje+"<br>Continuaremos con la siguiente actividad.";
+    setTimeout(()=>registrar(false),1200);
+  }
+}
+
+function registrar(acierto){
+  const q=preguntas[indice];
+  puntajes[q.cat].total++;
+  if(acierto) puntajes[q.cat].bien++;
+  const r=document.getElementById("retro");
+  if(acierto){
+    r.className="feedback correct";
+    r.innerHTML=intentosPregunta<=1
+      ? "<strong>¡Correcto!</strong> Excelente."
+      : "<strong>¡Correcto!</strong> Lo resolviste después de revisar la idea.";
+  }
+  historial.push({n:indice+1,area:q.cat,resultado:acierto?"Correcto":"Necesita reforzar",intentos:intentosPregunta});
+  indice++;
+  setTimeout(mostrarPregunta,850);
+}
+
+function porcentaje(area){
+  const d=puntajes[area];
+  return d.total?Math.round((d.bien/d.total)*100):0;
+}
+
+function mostrarResultado(){
+  document.getElementById("actividad").classList.add("hidden");
+  document.getElementById("resultado").classList.remove("hidden");
+
+  const c=porcentaje("Comprensión");
+  const p=porcentaje("Procedimiento");
+  const a=porcentaje("Aplicación");
+
+  document.getElementById("saludoFinal").innerHTML=`<strong>${nombre}</strong>, este es tu diagnóstico de aprendizaje.`;
+  document.getElementById("barC").style.width=c+"%";
+  document.getElementById("barP").style.width=p+"%";
+  document.getElementById("barA").style.width=a+"%";
+  document.getElementById("txtC").textContent=c+"%";
+  document.getElementById("txtP").textContent=p+"%";
+  document.getElementById("txtA").textContent=a+"%";
+
+  let tabla="<table><tr><th>#</th><th>Área</th><th>Resultado</th><th>Intentos</th></tr>";
+  historial.forEach(h=>{
+    tabla+=`<tr><td>${h.n}</td><td>${h.area}</td><td>${h.resultado}</td><td>${h.intentos}</td></tr>`;
+  });
+  tabla+="</table>";
+  document.getElementById("tablaResumen").innerHTML=tabla;
+
+  let rec=[];
+  if(c<70) rec.push("Reforzar la comprensión de equivalencias entre fracciones y decimales.");
+  if(p<70) rec.push("Practicar operaciones paso a paso con fracciones y decimales.");
+  if(a<70) rec.push("Resolver más problemas de contexto para aplicar los conceptos.");
+  if(c>=70 && p>=70 && a>=70) rec.push("Buen avance. Puedes continuar con ejercicios de mayor dificultad.");
+
+  document.getElementById("recomendacion").innerHTML=
+    "<strong>Recomendación:</strong><br>"+rec.map(x=>"• "+x).join("<br>");
+}
+</script>
+</body>
+</html>
